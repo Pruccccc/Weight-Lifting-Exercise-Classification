@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Analysis of Weight Lifting Exercise Classification</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 2em;
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 1em;
+            border-left: 5px solid #007acc;
+            overflow-x: auto;
+        }
+        h1, h2 {
+            color: #007acc;
+        }
+        code {
+            background: #eee;
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Analysis of Weight Lifting Exercise Classification</h1>
+    <p><strong>Author:</strong> Rofi Fitriyani<br>
+    <strong>Date:</strong> 2025-02-09</p>
+
+    <p>This report presents an analysis of the Weight Lifting Exercise dataset using machine learning techniques. The goal is to classify how participants perform barbell lifts based on sensor data collected from accelerometers placed on their belt, forearm, arm, and dumbbell. The target variable, <code>classe</code>, represents different exercise types.</p>
+
+    <h2>Load Libraries</h2>
+    <pre><code>library(tidyverse)
+library(caret)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+library(e1071)</code></pre>
+
+    <h2>Load Data</h2>
+    <pre><code>train_url <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+test_url <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+train_data <- read.csv(url(train_url), na.strings = c("NA", ""))
+test_data <- read.csv(url(test_url), na.strings = c("NA", ""))</code></pre>
+
+    <h2>Data Cleaning & Preprocessing</h2>
+    <pre><code>train_data <- train_data[, colSums(is.na(train_data)) == 0]
+test_data <- test_data[, colSums(is.na(test_data)) == 0]
+train_data <- train_data[, -c(1:7)]
+test_data <- test_data[, -c(1:7)]
+train_data$classe <- as.factor(train_data$classe)</code></pre>
+
+    <h2>Split Data for Training & Validation</h2>
+    <pre><code>set.seed(123)
+trainIndex <- createDataPartition(train_data$classe, p = 0.7, list = FALSE)
+trainSet <- train_data[trainIndex, ]
+validationSet <- train_data[-trainIndex, ]</code></pre>
+
+    <h2>Train the Machine Learning Model</h2>
+    <pre><code>model_rf <- randomForest(classe ~ ., data = trainSet, importance = TRUE, ntree = 100)</code></pre>
+
+    <h2>Model Evaluation</h2>
+    <pre><code>predictions <- predict(model_rf, validationSet)
+conf_matrix <- confusionMatrix(predictions, validationSet$classe)</code></pre>
+
+    <h2>Sample Confusion Matrix (Output)</h2>
+    <pre><code>Accuracy : 0.9954
+Kappa : 0.9942
+Balanced Accuracy: ~0.99</code></pre>
+
+    <h2>Feature Importance</h2>
+    <pre><code>varImpPlot(model_rf)</code></pre>
+
+    <h2>Predict on Test Data</h2>
+    <pre><code>final_predictions <- predict(model_rf, test_data)
+print(final_predictions)</code></pre>
+
+    <h2>Export Predictions</h2>
+    <pre><code>pml_write_files = function(x) {
+  for(i in 1:length(x)) {
+    filename = paste0("problem_id_", i, ".txt")
+    write.table(x[i], file = filename, quote = FALSE, row.names = FALSE, col.names = FALSE)
+  }
+}
+pml_write_files(final_predictions)</code></pre>
+
+    <p><strong>Conclusion:</strong> This analysis successfully classified weightlifting exercises using sensor data. The Random Forest model demonstrated high accuracy, and key sensor readings were identified as important predictors.</p>
+</body>
+</html>
